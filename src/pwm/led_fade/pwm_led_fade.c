@@ -25,22 +25,22 @@
 
 void on_pwm_wrap() {
 // this is the interrupt handler, called each time the PWM counter wraps
-    static uint16_t fade = 0;
-    static bool going_up = true;
+    static int fade = 255;
+    static bool going_down = true;
     // Clear the interrupt flag that brought us here
     pwm_clear_irq(pwm_gpio_to_slice_num(PICO_DEFAULT_LED_PIN));
 
-    if (going_up) {
-        ++fade;
-        if (fade > MAX_LED_BRIGHTNESS) {
-            fade = MAX_LED_BRIGHTNESS;
-            going_up = false;
-        }
-    } else {
+    if (going_down) {
         --fade;
         if (fade < MIN_LED_BRIGHTNESS) {
             fade = MIN_LED_BRIGHTNESS;
-            going_up = true;
+            going_down = false;
+        }
+    } else {
+        ++fade;
+        if (fade > MAX_LED_BRIGHTNESS) {
+            fade = MAX_LED_BRIGHTNESS;
+            going_down = true;
         }
     }
     // Square the fade value to make the LED's brightness appear more linear
