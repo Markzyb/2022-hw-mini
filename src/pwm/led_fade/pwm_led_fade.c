@@ -23,24 +23,32 @@
 #define MAX_LED_BRIGHTNESS 255
 #define MIN_LED_BRIGHTNESS 0
 
+
 void on_pwm_wrap() {
 // this is the interrupt handler, called each time the PWM counter wraps
-    static int fade = 255;
-    static bool going_down = true;
+    static int fade = 0;
+    static bool going_up = true;
+    static int inc = 1;
+    
     // Clear the interrupt flag that brought us here
     pwm_clear_irq(pwm_gpio_to_slice_num(PICO_DEFAULT_LED_PIN));
 
-    if (going_down) {
-        --fade;
-        if (fade < MIN_LED_BRIGHTNESS) {
-            fade = MIN_LED_BRIGHTNESS;
-            going_down = false;
-        }
-    } else {
-        ++fade;
+    if (going_up) {
+        fade = fade + inc;
         if (fade > MAX_LED_BRIGHTNESS) {
             fade = MAX_LED_BRIGHTNESS;
-            going_down = true;
+            going_up = false;
+            if (inc < 10) {
+                inc++;
+            } else {
+                inc = 1;
+            }
+        }
+    } else {
+        fade = fade - inc;
+        if (fade < MIN_LED_BRIGHTNESS) {
+            fade = MIN_LED_BRIGHTNESS;
+            going_up = true;
         }
     }
     // Square the fade value to make the LED's brightness appear more linear
@@ -68,7 +76,7 @@ int main(void) {
     // counter is allowed to wrap over its maximum range (0 to 2**16-1)
     pwm_config config = pwm_get_default_config();
     // Set divider, reduces counter clock to sysclock/this value
-    pwm_config_set_clkdiv(&config, 4.f);
+    pwm_config_set_clkdiv(&config, 16.f);
     // Load the configuration into our PWM slice, and set it running.
     pwm_init(slice_num, &config, true);
 
